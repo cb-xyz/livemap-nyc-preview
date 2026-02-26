@@ -4,291 +4,540 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>livemap.nyc — Summer 2026</title>
-  <meta name="description" content="Explore NYC Summer 2026 — live. Navigate Live XYZ map tabs and open full-screen maps instantly." />
+  <meta name="description" content="Explore NYC Summer 2026 — live. Curated maps and guides to help New Yorkers and visitors discover small businesses across all five boroughs." />
+
   <style>
     :root{
-      --bg:#070b12; --panel:rgba(7,11,18,.78); --card:rgba(255,255,255,.05);
-      --line:rgba(255,255,255,.12); --text:#eaf0ff; --muted:#a9b4d0;
-      --accent:#7c5cff; --accent2:#2ee59d; --r:16px;
-      --shadow: 0 18px 55px rgba(0,0,0,.50);
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --bg:#f6f7f9;
+      --panel:#ffffff;
+      --text:#0b1220;
+      --muted:#5a667a;
+      --line:rgba(15, 23, 42, .10);
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+      --shadow2: 0 6px 18px rgba(15, 23, 42, .08);
+      --radius:18px;
+      --radius2:14px;
+      --accent:#2563eb; /* clean enterprise blue */
+      --font: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text", Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
+
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
-      margin:0; font-family:var(--font); color:var(--text);
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(124,92,255,.18), transparent 55%),
-        radial-gradient(800px 500px at 85% 15%, rgba(46,229,157,.10), transparent 55%),
-        var(--bg);
+      margin:0;
+      font-family:var(--font);
+      background: var(--bg);
+      color:var(--text);
     }
+
     a{ color:inherit; text-decoration:none; }
 
+    /* Header */
     header{
-      position:fixed; top:0; left:0; right:0; z-index:50;
-      background:var(--panel); backdrop-filter: blur(14px);
-      border-bottom:1px solid var(--line);
+      position:fixed;
+      top:0; left:0; right:0;
+      z-index:50;
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
     }
-    .wrap{ width:min(1120px, calc(100% - 28px)); margin:0 auto; }
-    .bar{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 0; }
-    .brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px; min-width:0; }
-    .mark{ width:32px;height:32px;border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent2));
-      box-shadow: 0 12px 34px rgba(124,92,255,.25); flex:0 0 auto; }
-    .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wrap{ width:min(1160px, calc(100% - 28px)); margin:0 auto; }
+    .bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      letter-spacing:-.2px;
+    }
+    .logo{
+      width:30px;height:30px;border-radius:10px;
+      background: radial-gradient(circle at 30% 30%, rgba(37,99,235,.35), transparent 55%),
+                  radial-gradient(circle at 70% 60%, rgba(37,99,235,.18), transparent 55%),
+                  #eaf0ff;
+      border:1px solid rgba(37,99,235,.18);
+    }
 
-    nav{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
-    .tab{
-      border:1px solid transparent; background:transparent; color:var(--muted);
-      font-weight:850; padding:9px 10px; border-radius:999px; cursor:pointer; font-size:13px;
+    nav{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
     }
-    .tab:hover{ background:rgba(255,255,255,.06); color:var(--text); }
-    .tab.active{ background:rgba(124,92,255,.20); border-color:rgba(124,92,255,.35); color:var(--text); }
+    .tab{
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight:700;
+      padding:9px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:13px;
+      line-height:1;
+    }
+    .tab:hover{
+      background: rgba(15,23,42,.04);
+      color: var(--text);
+    }
+    .tab.active{
+      background: rgba(37,99,235,.10);
+      border-color: rgba(37,99,235,.18);
+      color: var(--text);
+    }
 
     .cta{
-      display:inline-flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
-      background:linear-gradient(135deg, var(--accent2), rgba(46,229,157,.70));
-      color:#061018; font-weight:950; border:0; cursor:pointer; box-shadow: var(--shadow); white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:999px;
+      background: var(--accent);
+      color:white;
+      font-weight:800;
+      border:0;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      white-space:nowrap;
     }
+    .cta:hover{ filter: brightness(.98); }
 
     main{ padding-top:74px; }
-    .hero{ padding:18px 0 6px; }
+
+    /* Hero */
+    .hero{ padding:18px 0 10px; }
     .heroCard{
-      border:1px solid var(--line); background: rgba(11,18,32,.55);
-      border-radius: 22px; padding:18px; box-shadow: var(--shadow);
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: 24px;
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
     }
-    .heroTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    h1{ margin:0; font-size: clamp(22px, 2.2vw, 30px); letter-spacing:-.4px; }
-    .subtitle{ margin:6px 0 0; color:var(--muted); font-weight:650; max-width: 85ch; }
-    .quick{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
-
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:10px;
-      padding:10px 12px; border-radius:999px; border:1px solid var(--line);
-      background:rgba(255,255,255,.06); color:var(--text); font-weight:900; cursor:pointer; white-space:nowrap;
+    h1{
+      margin:0;
+      font-size: clamp(22px, 2.2vw, 30px);
+      letter-spacing:-.4px;
     }
-    .btn:hover{ background:rgba(255,255,255,.09); }
-    .btnPrimary{
-      border:0; background:linear-gradient(135deg, var(--accent), rgba(124,92,255,.70));
-      box-shadow: 0 18px 45px rgba(124,92,255,.18);
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-weight:600;
+      max-width: 92ch;
+      line-height:1.35;
     }
-
-    .grid{ display:grid; grid-template-columns: 1fr; gap:12px; padding:14px 0 28px; }
-    .panel{ border:1px solid var(--line); background: rgba(11,18,32,.45); border-radius: var(--r); padding:14px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
-    .search{ width:min(520px, 100%); display:flex; gap:10px; align-items:center; }
+    .heroRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .search{
+      width:min(560px, 100%);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
     input[type="search"]{
-      width:100%; padding:12px 12px; border-radius:14px; border:1px solid var(--line);
-      background:rgba(255,255,255,.05); color:var(--text); outline:none; font-weight:750;
+      width:100%;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      font-weight:650;
     }
-    input::placeholder{ color: rgba(169,180,208,.85); font-weight:650; }
-    .hint{ color:var(--muted); font-size:12.5px; font-weight:650; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+    input::placeholder{ color: #8892a6; font-weight:550; }
 
-    .list{ margin-top:12px; display:grid; gap:8px; }
-    .item{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:12px 12px; border-radius: 14px; border:1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.04); cursor:pointer;
+    .quick{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
-    .item:hover{ background: rgba(255,255,255,.06); }
-    .item .left{ min-width:0; }
-    .title{ font-weight:950; letter-spacing:-.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 70ch; }
-    .meta{ margin-top:3px; color:var(--muted); font-size:12.5px; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 70ch; }
-    .pill{ padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.04);
-      color:var(--muted); font-weight:900; font-size:12px; white-space:nowrap; flex:0 0 auto; }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      font-weight:750;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btn:hover{ background: rgba(15,23,42,.02); }
+    .btnPrimary{
+      background: rgba(37,99,235,.10);
+      border-color: rgba(37,99,235,.20);
+      color: var(--text);
+    }
 
-    footer{ border-top:1px solid var(--line); color:var(--muted); padding:18px 0 24px; font-size:12.5px; }
+    /* Cards */
+    .grid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 14px 0 28px;
+    }
+    @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 640px){
+      nav{ display:none; }
+      .grid{ grid-template-columns: 1fr; }
+    }
 
-    @media (max-width:900px){ nav{ display:none; } }
+    .card{
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .08s ease;
+      min-height: 260px;
+      display:flex;
+      flex-direction:column;
+    }
+    .card:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 36px rgba(15,23,42,.10);
+    }
+
+    .thumb{
+      height: 150px;
+      background: linear-gradient(180deg, rgba(37,99,235,.10), rgba(15,23,42,.03));
+      position:relative;
+      border-bottom:1px solid var(--line);
+      overflow:hidden;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .badge{
+      position:absolute;
+      left:12px;
+      top:12px;
+      background: rgba(255,255,255,.88);
+      border:1px solid rgba(15,23,42,.10);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight:800;
+      font-size:12px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      color: var(--text);
+    }
+    .badge .flag{ font-size:14px; }
+
+    .body{
+      padding: 12px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex:1 1 auto;
+    }
+    .title{
+      font-weight:850;
+      letter-spacing:-.2px;
+      line-height:1.15;
+      margin:0;
+      font-size:15px;
+    }
+    .meta{
+      color: var(--muted);
+      font-weight:600;
+      font-size:13px;
+      line-height:1.25;
+      margin:0;
+    }
+    .actions{
+      margin-top:auto;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .open{
+      font-weight:850;
+      color: var(--accent);
+      font-size:13px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:7px 9px;
+      background: rgba(15,23,42,.02);
+      color: var(--muted);
+      font-weight:750;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    footer{
+      border-top:1px solid var(--line);
+      padding: 18px 0 24px;
+      color: var(--muted);
+      font-size:12.5px;
+    }
+    .footRow{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="wrap">
-      <div class="bar">
-        <div class="brand" title="livemap.nyc">
-          <div class="mark" aria-hidden="true"></div>
-          <span>livemap.nyc</span>
-        </div>
-
-        <nav aria-label="Map tabs">
-          <button class="tab active" data-tab="explore">Explore</button>
-          <button class="tab" data-tab="country">By Country</button>
-          <button class="tab" data-tab="neighborhood">Neighborhoods</button>
-          <button class="tab" data-tab="events">Events</button>
-          <button class="tab" data-tab="watch">Watch Parties</button>
-        </nav>
-
-        <a class="cta" href="https://livexyz.com/summer2026" target="_blank" rel="noopener">Promote Your Storefront (Free)</a>
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>livemap.nyc</div>
       </div>
+
+      <nav aria-label="Map tabs">
+        <button class="tab active" data-tab="explore">Explore</button>
+        <button class="tab" data-tab="country">By Country</button>
+        <button class="tab" data-tab="neighborhood">Neighborhoods</button>
+        <button class="tab" data-tab="events">Events</button>
+        <button class="tab" data-tab="watch">Watch Parties</button>
+      </nav>
+
+      <a class="cta" href="https://livexyz.com/summer2026" target="_blank" rel="noopener">
+        Promote Your Storefront (Free)
+      </a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <div class="wrap">
-      <section class="hero">
-        <div class="heroCard">
-          <div class="heroTop">
-            <div>
-              <h1 id="heading">Explore NYC Summer 2026 — live.</h1>
-              <p class="subtitle" id="subheading">
-                Tap a map to open it full-screen. Use the tabs to browse country guides, neighborhoods, and event collections.
-              </p>
-            </div>
-            <div class="quick">
-              <button class="btn btnPrimary" id="openGeneral">Open Live NYC Map →</button>
-              <button class="btn" id="copyLink">Copy Share Link</button>
-            </div>
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div class="heroCard">
+        <h1 id="heading">Explore NYC Summer 2026 — live.</h1>
+        <p class="subtitle" id="subheading">
+          Choose a curated map below. Each map opens in a new tab so you stay focused on content.
+        </p>
+
+        <div class="heroRow">
+          <div class="search">
+            <input id="q" type="search" placeholder="Search this tab (e.g., France, Astoria, Sail4th, Sports Bars)..." autocomplete="off" />
+          </div>
+          <div class="quick">
+            <button class="btn btnPrimary" id="openGeneral">Open Live NYC Map</button>
+            <button class="btn" id="copyLink">Copy Library Link</button>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="grid">
-        <div class="panel">
-          <div class="row">
-            <div class="search">
-              <input id="q" type="search" placeholder="Search this tab (e.g., France, Astoria, Sail4th, Sports Bars)..." autocomplete="off" />
-            </div>
-            <div class="hint"><span class="mono">Tip:</span> press <span class="mono">Ctrl</span> + <span class="mono">K</span> to focus search</div>
-          </div>
-          <div class="list" id="list"></div>
-        </div>
-      </section>
+    <section>
+      <div class="grid" id="grid"></div>
+    </section>
 
-      <footer>
-        <div class="row">
-          <div><b style="color:var(--text)">livemap.nyc</b> <span class="mono">•</span> Live XYZ</div>
-          <div>Share this page link to share the library; each map opens full-screen on <span class="mono">share.livexyz.com</span>.</div>
-        </div>
-      </footer>
-    </div>
-  </main>
+    <footer>
+      <div class="footRow">
+        <div><b style="color:var(--text)">livemap.nyc</b> • Live XYZ</div>
+        <div>Maps open on <b>share.livexyz.com</b>. This page is a lightweight, shareable library.</div>
+      </div>
+    </footer>
+  </div>
+</main>
 
-  <script>
-    // Copy for each tab
-    const TAB_COPY = {
-      explore: { heading:"Explore NYC Summer 2026 — live.", sub:"Tap a map to open it full-screen. Use the tabs to browse country guides, neighborhoods, and event collections." },
-      country: { heading:"By Country", sub:"Country cuisine guides — great for finding fan hubs, watch party neighborhoods, and community favorites." },
-      neighborhood: { heading:"Neighborhoods & Corridors", sub:"Browse NYC by borough, neighborhood, or commercial corridor — then open the map full-screen." },
-      events: { heading:"Special Events", sub:"World Cup moments, Sail4th viewing spots, and seasonal collections." },
-      watch: { heading:"Watch Parties", sub:"Find sports bars and match-friendly places across the city." }
-    };
+<script>
+  // --- Helpers ---
+  function embedToShareUrl(embedSrc){
+    const u = new URL(embedSrc);
+    const share = new URL("https://share.livexyz.com/");
+    for (const [k,v] of u.searchParams.entries()) share.searchParams.set(k,v);
+    return share.toString();
+  }
 
-    // Convert embed.js URL -> share.livexyz.com URL (full-screen)
-    function embedToShareUrl(embedSrc){
-      const u = new URL(embedSrc);
-      const share = new URL("https://share.livexyz.com/");
-      for (const [k,v] of u.searchParams.entries()) share.searchParams.set(k,v);
-      return share.toString();
+  // Screenshot thumbnails for map pages (works well on GitHub Pages)
+  // If you don't want a third-party thumbnail service later, we can replace these with your own hosted thumbnails.
+  function thumbFromUrl(url){
+    // thum.io grabs a live screenshot of any URL and returns an image
+    const enc = encodeURIComponent(url);
+    return `https://image.thum.io/get/width/1200/crop/800/noanimate/${enc}`;
+  }
+
+  function openMap(url){
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  // --- Copy per tab ---
+  const TAB_COPY = {
+    explore: {
+      heading: "Explore NYC Summer 2026 — live.",
+      sub: "Choose a curated map below. Each map opens in a new tab so you stay focused on content."
+    },
+    country: {
+      heading: "By Country",
+      sub: "Find bars & restaurants by national cuisine — ideal for World Cup fan communities."
+    },
+    neighborhood: {
+      heading: "Neighborhoods & Corridors",
+      sub: "Browse the city geographically — boroughs, neighborhoods, and corridors."
+    },
+    events: {
+      heading: "Special Events",
+      sub: "World Cup moments, Sail4th viewing, and seasonal highlights."
+    },
+    watch: {
+      heading: "Watch Parties",
+      sub: "Match-friendly places — sports bars and watch party hubs."
     }
+  };
 
-    // Your maps (add as needed)
-    const MAPS = {
-      explore: [
-        { title:"Live NYC Map (General)", meta:"All places • all boroughs", url:"https://share.livexyz.com/" },
-        { title:"Sports Bars (Watch Parties)", meta:"Dark theme • subway lines on", url:"https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=" }
-      ],
-      watch: [
-        { title:"Sports Bars", meta:"Watch parties • match-friendly spots", url:"https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=" }
-      ],
-      events: [
-        { title:"Sail4th Parade Viewings (Coming Soon)", meta:"Add the share URL when ready", url:"https://share.livexyz.com/" },
-        { title:"World Cup Events (Coming Soon)", meta:"Add curated event maplists here", url:"https://share.livexyz.com/" }
-      ],
-      neighborhood: [
-        { title:"Manhattan", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f13a48e5da0007cfa226" },
-        { title:"Brooklyn", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f12548e5da0007cfa20a" },
-        { title:"Queens", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f15048e5da0007cfa24b" },
-        { title:"The Bronx", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f17b48e5da0007cfa28b" },
-        { title:"Staten Island", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f16648e5da0007cfa270" },
-        { title:"Astoria", meta:"Neighborhood maplist", url:"https://share.livexyz.com/maplist/66b0f20948e5da0007cfa31f" },
-        { title:"SoHo", meta:"Neighborhood maplist", url:"https://share.livexyz.com/maplist/66b0ff9448e5da0007cfb454" }
-      ],
-      country: [
-        // Add the rest of your country rows here (same pattern)
-        { title:"Afghan Restaurant", meta:"By Country", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5237345d0003000633&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") },
-        { title:"Argentine Restaurant", meta:"By Country", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5a3d42bd000300061f&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") },
-        { title:"Brazilian Restaurant", meta:"By Country", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be553d42bd0003000605&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") },
-        { title:"French Restaurant", meta:"By Country", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5937345d0003000655&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") },
-        { title:"German Restaurant", meta:"By Country", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be8537345d0003000715&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") }
-      ]
-    };
+  // --- Data ---
+  // You can keep adding items; cards auto-render.
+  // Fields:
+  //  - title, meta, url
+  //  - badge: small label (e.g., "Country", "Neighborhood", "Event")
+  //  - flag: emoji flag (optional)
+  //  - thumb: (optional) custom thumbnail URL
+  const MAPS = {
+    explore: [
+      { title:"Live NYC Map (General)", meta:"All places • all boroughs", url:"https://share.livexyz.com/", badge:"Explore", thumb: thumbFromUrl("https://share.livexyz.com/") },
+      { title:"Sports Bars (Watch Parties)", meta:"Dark theme • subway lines on", url:"https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=", badge:"Watch", thumb: thumbFromUrl("https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") }
+    ],
 
-    let activeTab = "explore";
-    const listEl = document.getElementById("list");
-    const qEl = document.getElementById("q");
-    const headingEl = document.getElementById("heading");
-    const subEl = document.getElementById("subheading");
+    watch: [
+      { title:"Sports Bars", meta:"Watch parties • match-friendly spots", url:"https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=", badge:"Watch", thumb: thumbFromUrl("https://share.livexyz.com/?theme=dark&tags=5511be4737345d0003000601&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=") }
+    ],
 
-    function setActiveTab(tab){
-      activeTab = tab;
-      headingEl.textContent = TAB_COPY[tab]?.heading || "Maps";
-      subEl.textContent = TAB_COPY[tab]?.sub || "";
-      document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-      qEl.value = "";
-      render();
-    }
+    events: [
+      { title:"Sail4th Parade Viewings (Coming Soon)", meta:"Add the share URL when ready", url:"https://share.livexyz.com/", badge:"Event", thumb: thumbFromUrl("https://share.livexyz.com/") },
+      { title:"World Cup Events (Coming Soon)", meta:"Add curated event maplists here", url:"https://share.livexyz.com/", badge:"Event", thumb: thumbFromUrl("https://share.livexyz.com/") }
+    ],
 
-    function openMap(url){
-      // same-tab keeps the consumer in a full-screen map experience
-      window.location.href = url;
-    }
+    neighborhood: [
+      { title:"Manhattan", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f13a48e5da0007cfa226", badge:"Borough", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f13a48e5da0007cfa226") },
+      { title:"Brooklyn", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f12548e5da0007cfa20a", badge:"Borough", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f12548e5da0007cfa20a") },
+      { title:"Queens", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f15048e5da0007cfa24b", badge:"Borough", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f15048e5da0007cfa24b") },
+      { title:"The Bronx", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f17b48e5da0007cfa28b", badge:"Borough", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f17b48e5da0007cfa28b") },
+      { title:"Staten Island", meta:"Borough maplist", url:"https://share.livexyz.com/maplist/66b0f16648e5da0007cfa270", badge:"Borough", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f16648e5da0007cfa270") },
+      { title:"Astoria", meta:"Neighborhood maplist", url:"https://share.livexyz.com/maplist/66b0f20948e5da0007cfa31f", badge:"Neighborhood", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0f20948e5da0007cfa31f") },
+      { title:"SoHo", meta:"Neighborhood maplist", url:"https://share.livexyz.com/maplist/66b0ff9448e5da0007cfb454", badge:"Neighborhood", thumb: thumbFromUrl("https://share.livexyz.com/maplist/66b0ff9448e5da0007cfb454") }
+    ],
 
-    function render(){
-      const q = qEl.value.trim().toLowerCase();
-      const rows = (MAPS[activeTab] || []).filter(x => {
-        if(!q) return true;
-        return (x.title || "").toLowerCase().includes(q) || (x.meta || "").toLowerCase().includes(q);
-      });
+    country: [
+      // Countries/regions from your embed list (these open the share version)
+      { title:"Afghan Restaurant", meta:"Cuisine map", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5237345d0003000633&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines="), badge:"Country", flag:"🇦🇫", thumb: thumbFromUrl(embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5237345d0003000633&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=")) },
 
-      listEl.innerHTML = "";
-      rows.forEach(x => {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="left">
-            <div class="title">${x.title}</div>
-            <div class="meta">${x.meta || ""}</div>
-          </div>
-          <div class="pill">Open →</div>
-        `;
-        div.addEventListener("click", () => openMap(x.url));
-        listEl.appendChild(div);
-      });
+      { title:"Argentine Restaurant", meta:"Cuisine map", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5a3d42bd000300061f&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines="), badge:"Country", flag:"🇦🇷", thumb: thumbFromUrl(embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5a3d42bd000300061f&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=")) },
 
-      if(rows.length === 0){
-        const empty = document.createElement("div");
-        empty.className = "hint";
-        empty.style.padding = "10px 2px 0";
-        empty.textContent = "No matches. Try a different search.";
-        listEl.appendChild(empty);
-      }
-    }
+      { title:"Brazilian Restaurant", meta:"Cuisine map", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be553d42bd0003000605&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines="), badge:"Country", flag:"🇧🇷", thumb: thumbFromUrl(embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be553d42bd0003000605&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=")) },
 
-    document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setActiveTab(b.dataset.tab)));
-    qEl.addEventListener("input", render);
+      { title:"French Restaurant", meta:"Cuisine map", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5937345d0003000655&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines="), badge:"Country", flag:"🇫🇷", thumb: thumbFromUrl(embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be5937345d0003000655&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=")) },
 
-    document.addEventListener("keydown", (e) => {
-      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){
-        e.preventDefault();
-        qEl.focus();
-      }
+      { title:"German Restaurant", meta:"Cuisine map", url: embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be8537345d0003000715&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines="), badge:"Country", flag:"🇩🇪", thumb: thumbFromUrl(embedToShareUrl("https://embed.livexyz.com/embed.js?theme=dark&tags=5511be8537345d0003000715&pinSize=large&pinColor=&zoom=10.25&bearing=&lat=40.741598&lng=-73.943009&showSubwayLines=")) }
+    ]
+  };
+
+  // --- App ---
+  let activeTab = "explore";
+  const gridEl = document.getElementById("grid");
+  const qEl = document.getElementById("q");
+  const headingEl = document.getElementById("heading");
+  const subEl = document.getElementById("subheading");
+
+  function setActiveTab(tab){
+    activeTab = tab;
+    headingEl.textContent = TAB_COPY[tab]?.heading || "Maps";
+    subEl.textContent = TAB_COPY[tab]?.sub || "";
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    qEl.value = "";
+    render();
+  }
+
+  function render(){
+    const q = qEl.value.trim().toLowerCase();
+    const rows = (MAPS[activeTab] || []).filter(x => {
+      if(!q) return true;
+      return (x.title||"").toLowerCase().includes(q) || (x.meta||"").toLowerCase().includes(q);
     });
 
-    document.getElementById("openGeneral").addEventListener("click", () => openMap("https://share.livexyz.com/"));
-    document.getElementById("copyLink").addEventListener("click", async () => {
-      try{
-        await navigator.clipboard.writeText(window.location.href);
-        const btn = document.getElementById("copyLink");
-        const prev = btn.textContent;
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = prev, 900);
-      }catch(e){
-        alert("Copy failed — you can manually copy the URL from the address bar.");
-      }
+    gridEl.innerHTML = "";
+
+    rows.forEach(x => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.addEventListener("click", () => openMap(x.url));
+
+      const flag = x.flag ? `<span class="flag">${x.flag}</span>` : "";
+      const badge = x.badge ? `<div class="badge">${flag}<span>${x.badge}</span></div>` : "";
+
+      const thumb = x.thumb
+        ? `<img src="${x.thumb}" alt="Preview for ${x.title}" loading="lazy" referrerpolicy="no-referrer"
+               onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(180deg, rgba(37,99,235,.10), rgba(15,23,42,.03))';" />`
+        : "";
+
+      card.innerHTML = `
+        <div class="thumb">
+          ${thumb}
+          ${badge}
+        </div>
+        <div class="body">
+          <p class="title">${x.title}</p>
+          <p class="meta">${x.meta || ""}</p>
+          <div class="actions">
+            <span class="open">Open in new tab →</span>
+            <span class="pill">share.livexyz.com</span>
+          </div>
+        </div>
+      `;
+
+      gridEl.appendChild(card);
     });
 
-    setActiveTab("explore");
-  </script>
+    if(rows.length === 0){
+      const empty = document.createElement("div");
+      empty.style.padding = "10px 2px 0";
+      empty.style.color = "var(--muted)";
+      empty.style.fontWeight = "650";
+      empty.textContent = "No matches. Try a different search.";
+      gridEl.appendChild(empty);
+    }
+  }
+
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setActiveTab(b.dataset.tab)));
+  qEl.addEventListener("input", render);
+
+  document.getElementById("openGeneral").addEventListener("click", () => openMap("https://share.livexyz.com/"));
+  document.getElementById("copyLink").addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(window.location.href);
+      const btn = document.getElementById("copyLink");
+      const prev = btn.textContent;
+      btn.textContent = "Copied";
+      setTimeout(() => btn.textContent = prev, 900);
+    }catch(e){
+      alert("Copy failed — you can manually copy the URL from the address bar.");
+    }
+  });
+
+  // Init
+  setActiveTab("explore");
+</script>
 </body>
 </html>
