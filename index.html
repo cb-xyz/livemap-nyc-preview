@@ -489,12 +489,14 @@
       const rows = parseCSV(text);
 
       const byId = new Map();
+      const byUrl = new Map();
       const bySlug = new Map();
       rows.forEach(r => {
         const mapId = (r.mapId || r.mapID || r.listId || "").trim();
         const slug  = (r.slug || "").trim();
         const file  = (r.file_all || r.file || "").trim();
         if(mapId && file) byId.set(mapId, file);
+        if(mapId && (r.url||r.URL||"").trim()) byUrl.set(mapId, (r.url||r.URL||"").trim());
         if(slug && file) bySlug.set(slug, file);
       });
 
@@ -502,7 +504,8 @@
       LIBRARIES.neighborhoods = LIBRARIES.neighborhoods.map(x => {
         const listId = extractMapId(x.url) || getParam(x.url, "listId");
         const thumb = (listId && byId.get(listId)) ? byId.get(listId) : "";
-        return { ...x, thumb: thumb || x.thumb || "" };
+        const url   = (listId && byUrl.get(listId)) ? byUrl.get(listId) : x.url;
+        return { ...x, url, thumb: thumb || x.thumb || "" };
       });
       // Build FULL category library directly from manifest (authoritative)
       function titleCase(x){
@@ -574,7 +577,7 @@
     document.querySelectorAll(".tab[data-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.view === view);
     });
-    window.scrollTo({top:0, behavior:"instant"});
+    window.scrollTo({top:0, behavior:"auto"});
   }
 
   // Cards
@@ -864,6 +867,7 @@
         renderHome();
         renderSearch(globalSearch.value);
       }
+      if(v === "explore") renderExplore();
       if(v === "country") renderCountry(countrySearch.value);
       if(v === "neighborhoods") renderNeighborhoods(neighSearch.value);
       if(v === "events") renderEvents();
