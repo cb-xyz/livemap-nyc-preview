@@ -275,7 +275,15 @@
               <p>The full Live NYC Map.</p>
             </div>
           </div>
-          <div id="exploreCitywide" class="grid"></div>
+          <div class="embed-wrap">
+            <iframe
+              src="https://share.livexyz.com/?theme=dark"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              style="width:100%; height:560px; border:0; border-radius:18px;"
+              title="Live NYC Map — Citywide"
+            ></iframe>
+          </div>
         </div>
 
         <div id="exploreCollections"></div>
@@ -430,6 +438,21 @@
     }catch(e){ return null; }
   }
 
+  function extractMapId(url){
+    // Supports maplist URLs like https://share.livexyz.com/maplist/<id> and older ?listId=<id> patterns
+    try{
+      const u = new URL(url);
+      const m = u.pathname.match(/\/maplist\/([a-z0-9]+)/i);
+      if(m) return m[1];
+      const q = u.searchParams.get("listId");
+      if(q) return q;
+      return null;
+    }catch(e){
+      const m = String(url||"").match(/\/maplist\/([a-z0-9]+)/i);
+      return m ? m[1] : null;
+    }
+  }
+
   function parseCSV(text){
     const rows = [];
     let row = [], cur = "", inQ = false;
@@ -477,7 +500,7 @@
 
       // Decorate neighborhoods/corridors by listId
       LIBRARIES.neighborhoods = LIBRARIES.neighborhoods.map(x => {
-        const listId = getParam(x.url, "listId");
+        const listId = extractMapId(x.url) || getParam(x.url, "listId");
         const thumb = (listId && byId.get(listId)) ? byId.get(listId) : "";
         return { ...x, thumb: thumb || x.thumb || "" };
       });
@@ -588,13 +611,6 @@
   }
   // Explore view (Category Maps grouped by collection)
   function renderExplore(){
-    // Citywide card
-    const cityWrap = document.getElementById("exploreCitywide");
-    if(cityWrap){
-      const cityItem = window.CITYWIDE || { title:"NYC Citywide", type:"Citywide", url:"https://share.livexyz.com/?theme=dark", thumb:"" };
-      cityWrap.innerHTML = cardHTML({ ...cityItem, meta:"Open the full map", thumb: cityItem.thumb || thumbFromUrl(cityItem.url) });
-      bindCardClicks(cityWrap, [cityItem]);
-    }
 
     // Group tags by their `group` (Food, Essentials, Services, etc.)
     const root = document.getElementById("exploreCollections");
@@ -742,7 +758,7 @@
     const items = LIBRARIES.neighborhoods
       .filter(x => !query || (x.title||"").toLowerCase().includes(query) || (x.type||"").toLowerCase().includes(query))
       .slice(0, 150)
-      .map(x => ({...x, meta: x.type, thumb: thumbFromUrl(x.url)}));
+      .map(x => ({...x, meta: x.type, thumb: x.thumb || thumbFromUrl(x.url)}));
     neighGrid.innerHTML = items.map(cardHTML).join("");
     bindCardClicks(neighGrid, items);
   }
