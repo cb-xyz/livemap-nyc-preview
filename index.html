@@ -156,7 +156,11 @@
     footer{ border-top:1px solid var(--line); padding: 18px 0 24px; color: var(--muted); font-size:12.5px; }
     .footRow{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; }
     .footStrong{ color:var(--text); font-weight:850; }
-  </style>
+  
+/* Explore: make search input match other pages */
+#exploreSearch.search{ width: min(520px, 92vw); }
+
+</style>
 </head>
 <body>
 <header>
@@ -274,6 +278,7 @@
               <h2>Citywide</h2>
               <p>The full Live NYC Map.</p>
             </div>
+            <div class="linkBtn" id="openShare">Open full screen →</div>
           </div>
           <div class="embed-wrap">
             <iframe
@@ -609,24 +614,22 @@
     `;
   }
 
-  function bindCardClicks(container, items) {
-  // Make cards open the *exact* manifest URL (not the generic share map)
+  function bindCardClicks(container, items){
   container.querySelectorAll(".card").forEach((card, idx) => {
     const item = items[idx];
-    if (!item) return;
+    if(!item) return;
 
     const open = (e) => {
       e.preventDefault();
       e.stopPropagation();
       const url = item.url || item.href || item.link;
-      if (url) window.open(url, "_blank", "noopener");
+      if(url) window.open(url, "_blank", "noopener");
     };
 
     card.addEventListener("click", open);
 
-    // If there’s a "View" button inside the card, wire it too
     const btn = card.querySelector(".btn, .view, button, a.btn");
-    if (btn) btn.addEventListener("click", open);
+    if(btn) btn.addEventListener("click", open);
   });
 }
 
