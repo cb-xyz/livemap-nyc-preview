@@ -160,6 +160,12 @@
 /* Explore: make search input match other pages */
 #exploreSearch.search{ width: min(520px, 92vw); }
 
+
+/* Explore subbar layout */
+.subbarStack{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.subbarControls{display:flex;justify-content:flex-end}
+#exploreSearch.search{max-width:none;width:min(720px, 92vw)}
+
 </style>
 </head>
 <body>
@@ -261,17 +267,15 @@
     <section id="view-explore" class="view" style="display:none;">
       <div class="subbar">
         <div class="wrap">
-          <div class="subbarInner">
+          <div class="subbarInner subbarStack">
             <div class="subbarTitle">Explore — Live NYC Map</div>
-            <div class="subbarRight">
-              <input id="exploreSearch" class="search" type="search" placeholder="Search category maps…" autocomplete="off" style="max-width:320px;" />
-              <button class="miniBtn" id="openShare">Open full screen</button>
+            <div class="subbarControls">
+              <input id="exploreSearch" class="search" type="search" placeholder="Search category maps…" autocomplete="off" />
             </div>
           </div>
         </div>
       </div>
-
-      <div class="wrap">
+<div class="wrap">
         <div class="section" style="margin-top:14px;">
           <div class="sectionHeader">
             <div>
@@ -503,6 +507,26 @@
       const text = await res.text();
       const rows = parseCSV(text);
 
+
+      // Build Neighborhoods & Corridors directly from manifest (authoritative)
+      const geoRows = rows.filter(r => {
+        const t = String(r.type||"").toLowerCase();
+        const c = String(r.collection||"").toLowerCase();
+        return t === "geography" || c === "neighborhood" || c === "corridor";
+      });
+
+      if(geoRows.length){
+        LIBRARIES.neighborhoods = geoRows.map(r => {
+          const title = r.Name || r.name || "";
+          const url = r.url || "";
+          const coll = String(r.collection||"").toLowerCase();
+          const type = coll ? (coll === "corridor" ? "Corridor" : "Neighborhood") : "Neighborhood";
+          const file = (r.file_all || "").trim().replace(/^assets\//,'');
+          const thumb = file ? ("assets/" + file.replace(/^\/+/,'').replace(/^all\//,'all/')) : "";
+          return { title, url, type, group: type, thumb };
+        });
+      }
+
       const byId = new Map();
       const bySlug = new Map();
       rows.forEach(r => {
@@ -574,10 +598,17 @@
   }
 
   // Thumbnails (optional). We use these sparingly for a polished “preview” feel.
-  function thumbFromUrl(url){
-    const enc = encodeURIComponent(url);
-    return `https://image.thum.io/get/width/1200/crop/800/noanimate/${enc}`;
+  function thumbFromUrl(url, title){
+  // Prefer local screenshots in assets/all based on maplist id + slugified title
+  const id = extractMapId(url);
+  const slug = slugify(title || "");
+  if(id && slug){
+    return `assets/all/${id}__${slug}.png`;
   }
+  // fallback to thum.io if we can't derive a local file
+  const enc = encodeURIComponent(url || "");
+  return `https://image.thum.io/get/width/1200/crop/800/noanimate/${enc}`;
+}
 
   // Views
   const VIEWS = ["home","explore","country","neighborhoods","events"];
@@ -598,9 +629,9 @@
     const badgeFlag = item.type === "Country" ? `<span class="flag">${flagForTitle(item.title)}</span>` : "";
     const badge = `<div class="badge">${badgeFlag}<span>${item.type}</span></div>`;
     const thumb = item.thumb ? `<img src="${item.thumb}" alt="Preview for ${item.title}" loading="lazy" referrerpolicy="no-referrer"
-      onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(180deg, rgba(10,91,255,.10), rgba(15,23,42,.02))';" />` : "";
+      onerror="if(this.dataset.tryJpg!=='1' && this.src.endsWith('.png')){this.dataset.tryJpg='1'; this.src=this.src.replace(/\.png$/i,'.jpg'); return;} this.style.display='none'; this.parentElement.style.background='linear-gradient(180deg, rgba(10,91,255,.10), rgba(15,23,42,.02))';" />` : "";
     return `
-      <div class="card" role="button" tabindex="0">
+      <div class="card" role="button" tabindex="0" data-url="${item.url || ""}">
         <div class="thumb">${thumb}${badge}</div>
         <div class="body">
           <p class="title">${item.title}</p>
@@ -615,18 +646,20 @@
   }
 
   function bindCardClicks(container, items){
-  container.querySelectorAll(".card").forEach((card, idx) => {
-    const item = items[idx];
-    if(!item) return;
+  const cards = container.querySelectorAll(".card");
+  cards.forEach((card, idx) => {
+    const item = items[idx] || {};
+    const url = item.url || item.href || item.link || card.getAttribute("data-url") || "";
 
     const open = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const url = item.url || item.href || item.link;
+      if(e){ e.preventDefault(); e.stopPropagation(); }
       if(url) window.open(url, "_blank", "noopener");
     };
 
     card.addEventListener("click", open);
+    card.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){ open(e); }
+    });
 
     const btn = card.querySelector(".btn, .view, button, a.btn");
     if(btn) btn.addEventListener("click", open);
@@ -709,7 +742,7 @@
     const cards = sectionItems.map(x => cardHTML({
       ...x,
       meta: "Category",
-      thumb: x.thumb || thumbFromUrl(x.url, x.title)
+      thumb: (x.thumb || thumbFromUrl(x.url, x.title))
     })).join("");
 
     return `
@@ -752,13 +785,13 @@
     bindTileClicks(homeCountry, c);
 
     // neighborhoods: show 6 curated (first 6)
-    const n = LIBRARIES.neighborhoods.slice(0, 6).map(x => ({...x, meta: x.type, thumb: x.thumb || thumbFromUrl(x.url)}));
+    const n = LIBRARIES.neighborhoods.slice(0, 6).map(x => ({...x, meta: x.type, thumb: (x.thumb || thumbFromUrl(x.url, x.title))}));
     const homeNeigh = document.getElementById("homeNeighborhoods");
     homeNeigh.innerHTML = n.map(cardHTML).join("");
     bindCardClicks(homeNeigh, n);
 
     // tags: show 6 top
-    const t = LIBRARIES.tags.slice(0, 6).map(x => ({...x, meta: x.group, thumb: x.thumb || thumbFromUrl(x.url)}));
+    const t = LIBRARIES.tags.slice(0, 6).map(x => ({...x, meta: x.group, thumb: (x.thumb || thumbFromUrl(x.url, x.title))}));
     const homeTags = document.getElementById("homeTags");
     homeTags.innerHTML = t.map(cardHTML).join("");
     bindCardClicks(homeTags, t);
