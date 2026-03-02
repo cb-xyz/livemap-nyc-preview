@@ -156,33 +156,6 @@
     footer{ border-top:1px solid var(--line); padding: 18px 0 24px; color: var(--muted); font-size:12.5px; }
     .footRow{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; }
     .footStrong{ color:var(--text); font-weight:850; }
-  
-    /* Explore UX */
-    .exploreTop{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:6px 0 14px;flex-wrap:wrap}
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{
-      padding:8px 10px;border-radius:999px;border:1px solid var(--line);
-      background:white;font-weight:750;font-size:13px;cursor:pointer;
-      user-select:none;
-    }
-    .chip.active{background:#e8efff;border-color:#c7d2fe;color:#0b3aa6}
-    .exploreLayout{display:grid;grid-template-columns: 260px 1fr;gap:14px;align-items:start}
-    .sidebar{
-      position:sticky; top:86px;
-      background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-      box-shadow:var(--shadow); padding:12px;
-      max-height: calc(100vh - 110px);
-      overflow:auto;
-    }
-    .sideItem{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:12px;cursor:pointer}
-    .sideItem:hover{background:#f1f5f9}
-    .sideItem.active{background:#e8efff;color:#0b3aa6}
-    .sideCount{color:var(--muted);font-weight:700;font-size:12px}
-    @media (max-width: 980px){
-      .exploreLayout{grid-template-columns:1fr}
-      .sidebar{position:relative;top:auto;max-height:none}
-    }
-
   </style>
 </head>
 <body>
@@ -245,26 +218,6 @@
           <div id="homeCountry" class="flagGrid"></div>
         </div>
 
-
-        <div class="section">
-          <div class="sectionHeader">
-            <div>
-              <h2>Citywide Map</h2>
-              <p>The full Live NYC Map — explore everything at once.</p>
-            </div>
-            <div class="linkBtn" id="openGeneral2">Open full screen →</div>
-          </div>
-          <div class="embed-wrap">
-            <iframe
-              src="https://share.livexyz.com/?theme=dark"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              style="width:100%; height:560px; border:0; border-radius:18px;"
-              title="Live NYC Map — Citywide"
-            ></iframe>
-          </div>
-        </div>
-
         <div class="section">
           <div class="sectionHeader">
             <div>
@@ -316,17 +269,24 @@
 
       <div class="wrap">
         <div class="section" style="margin-top:14px;">
-<div class="exploreTop">
-          <div id="exploreChips" class="chips"></div>
-          <div class="muted" id="exploreCount"></div>
-        </div>
-
-        <div class="exploreLayout">
-          <aside id="exploreSidebar" class="sidebar"></aside>
-          <div class="exploreMain">
-            <div id="exploreCollections"></div>
+          <div class="sectionHeader">
+            <div>
+              <h2>Citywide</h2>
+              <p>The full Live NYC Map.</p>
+            </div>
+          </div>
+          <div class="embed-wrap">
+            <iframe
+              src="https://share.livexyz.com/?theme=dark"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              style="width:100%; height:560px; border:0; border-radius:18px;"
+              title="Live NYC Map — Citywide"
+            ></iframe>
           </div>
         </div>
+
+        <div id="exploreCollections"></div>
       </div>
     </section>
 
@@ -692,128 +652,27 @@
     });
   }
   // Explore view (Category Maps grouped by collection)
+  function renderExplore(){
+  const root = document.getElementById("exploreCollections");
+  const countEl = document.getElementById("exploreCount");
+  if(!root) return;
 
-    // Explore state
-    const exploreState = { selected: "All" };
+  // Pull query from Explore search input (if it exists)
+  const q = (document.getElementById("exploreSearch")?.value || "").trim().toLowerCase();
 
-    function renderExplore(){
-      const root = document.getElementById("exploreCollections");
-      const chips = document.getElementById("exploreChips");
-      const sidebar = document.getElementById("exploreSidebar");
-      const countEl = document.getElementById("exploreCount");
-      const q = (document.getElementById("exploreSearch")?.value || "").trim().toLowerCase();
-      if(!root || !chips || !sidebar) return;
+  // Use the full category library
+  const base = (LIBRARIES.tags || []).filter(x => x && x.title && x.url);
 
-      const base = (LIBRARIES.tags || []).filter(x => x && x.title && x.url);
+  // Update count (total categories, not filtered)
+  if(countEl) countEl.textContent = `${base.length} maps`;
 
-      // Group counts (use group/collection)
-      const counts = {};
-      base.forEach(x => {
-        const g = (x.group || x.collection || "Other").toString().trim() || "Other";
-        counts[g] = (counts[g] || 0) + 1;
-      });
-
-      const groupsAll = Object.keys(counts).sort((a,b)=>a.localeCompare(b));
-
-      // Preferred order then alpha
-      const PREFERRED = ["Food","Drinks","Essentials","Services","Fashion","Body","Fitness","Parks & Rec","Arts & Culture","Entertainment","Home & Hobby","Auto","Transport","Municipal","Official NYC Guides","Groups","Misc","Lodging","Other"];
-      const orderedGroups = [
-        ...PREFERRED.filter(g => counts[g]),
-        ...groupsAll.filter(g => !PREFERRED.includes(g))
-      ];
-
-      // Build chips
-      const chipHTML = (label, isActive, n) =>
-        `<div class="chip ${isActive ? "active": ""}" data-chip="${escapeHTML(label)}">${escapeHTML(label)}${typeof n==="number" ? ` · ${n}`:""}</div>`;
-      chips.innerHTML =
-        chipHTML("All", exploreState.selected==="All", base.length) +
-        orderedGroups.map(g => chipHTML(g, exploreState.selected===g, counts[g])).join("");
-
-      chips.querySelectorAll(".chip").forEach(el => {
-        el.onclick = () => {
-          const v = el.getAttribute("data-chip");
-          exploreState.selected = (exploreState.selected === v) ? "All" : v;
-          renderExplore();
-        };
-      });
-
-      // Filter items
-      let items = base;
-      if(exploreState.selected !== "All"){
-        items = items.filter(x => (x.group || x.collection || "Other").toString().trim() === exploreState.selected);
-      }
-      if(q){
-        items = items.filter(x => (`${x.title} ${(x.group||"")} ${(x.collection||"")}`).toLowerCase().includes(q));
-      }
-
-      // Re-group after filtering
-      const groups = {};
-      items.forEach(x => {
-        const g = (x.group || x.collection || "Other").toString().trim() || "Other";
-        (groups[g] ||= []).push(x);
-      });
-
-      const visibleGroups = Object.keys(groups);
-      const orderedVisible = [
-        ...PREFERRED.filter(g => visibleGroups.includes(g)),
-        ...visibleGroups.filter(g => !PREFERRED.includes(g)).sort((a,b)=>a.localeCompare(b))
-      ];
-
-      // Count text
-      if(countEl){
-        const sel = exploreState.selected === "All" ? "All categories" : exploreState.selected;
-        countEl.textContent = `${sel} · ${items.length} maps${q ? " · filtered" : ""}`;
-      }
-
-      // Sidebar nav
-      sidebar.innerHTML = orderedVisible.map(g => {
-        const id = "grp-" + slugify(g);
-        const active = (exploreState.selected !== "All" && exploreState.selected === g);
-        return `<div class="sideItem ${active ? "active": ""}" data-jump="${id}">
-                  <div>${escapeHTML(g)}</div>
-                  <div class="sideCount">${groups[g].length}</div>
-                </div>`;
-      }).join("");
-
-      sidebar.querySelectorAll(".sideItem").forEach(el => {
-        el.onclick = () => {
-          const id = el.getAttribute("data-jump");
-          const target = document.getElementById(id);
-          if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
-        };
-      });
-
-      // Sections
-      root.innerHTML = orderedVisible.map(g => {
-        const sectionItems = groups[g].sort((a,b)=>a.title.localeCompare(b.title));
-        const cards = sectionItems.map(x => cardHTML({
-          ...x,
-          meta: x.type || "category",
-          thumb: x.thumb || thumbFromUrl(x.url)
-        })).join("");
-        const id = "grp-" + slugify(g);
-        return `
-          <div class="section" id="${id}">
-            <div class="sectionHeader">
-              <div>
-                <h2>${escapeHTML(g)}</h2>
-                <p>${sectionItems.length} maps</p>
-              </div>
-            </div>
-            <div class="grid">${cards}</div>
-          </div>
-        `;
-      }).join("");
-
-      // Bind clicks per group grid
-      const grids = root.querySelectorAll(".grid");
-      orderedVisible.forEach((g, i) => {
-        const gridEl = grids[i];
-        if(!gridEl) return;
-        bindCardClicks(gridEl, groups[g]);
-      });
-    }
-
+  // If empty, show debug message
+  if(!base.length){
+    root.innerHTML = `<div class="section"><p style="opacity:.75">
+      No category maps found. Check <code>assets/manifest.csv</code> and confirm the <code>type</code> column is <code>category</code>.
+    </p></div>`;
+    return;
+  }
 
   // Filter by search
   const items = base.filter(t => {
@@ -880,9 +739,6 @@
 
   document.getElementById("openShare").addEventListener("click", () => openNewTab("https://share.livexyz.com/"));
   document.getElementById("openGeneral").addEventListener("click", () => openNewTab("https://share.livexyz.com/"));
-  const og2 = document.getElementById("openGeneral2");
-  if(og2) og2.addEventListener("click", () => openNewTab("https://share.livexyz.com/?theme=dark"));
-
 
   // Homepage preview sections
   function renderHome(){
