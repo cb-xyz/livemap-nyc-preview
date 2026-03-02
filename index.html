@@ -504,13 +504,32 @@
         const thumb = (listId && byId.get(listId)) ? byId.get(listId) : "";
         return { ...x, thumb: thumb || x.thumb || "" };
       });
+      // Build FULL category library directly from manifest (authoritative)
+      function titleCase(x){
+        const t = String(x||"").trim().toLowerCase();
+        return t ? t.replace(/\b\w/g, c => c.toUpperCase()) : "Other";
+      }
 
-      // Decorate tag/category maps by slug(title)
-      LIBRARIES.tags = LIBRARIES.tags.map(x => {
-        const s = slugify(x.title);
-        const thumb = bySlug.get(s) || "";
-        return { ...x, slug: s, thumb: thumb || x.thumb || "" };
-      });
+      const categories = rows
+        .filter(r => String(r.type||"").trim().toLowerCase() === "category")
+        .map(r => {
+          const title = String(r.Name || r.name || "").trim();
+          const url = String(r.url || "").trim();
+          const file = String(r.file_all || r.file || "").trim();
+          const collection = String(r.collection || "").trim();
+          return {
+            title,
+            type: "Category",
+            group: titleCase(collection),   // this becomes your Explore sections (Food, Drinks, Essentials, etc.)
+            url,
+            thumb: file,
+            slug: slugify(title)
+          };
+        })
+        .filter(x => x.title && x.url);
+
+      // Overwrite tags with full library (~472)
+      LIBRARIES.tags = categories;
 
       // Country tiles keep their flag images as-is, but we still add slug for search
       LIBRARIES.countries = LIBRARIES.countries.map(x => ({ ...x, slug: slugify(x.title) }));
