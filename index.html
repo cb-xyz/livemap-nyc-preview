@@ -431,6 +431,16 @@
       .replace(/^-+|-+$/g, "");
   }
 
+  function escapeHTML(s){
+    return String(s ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#39;");
+  }
+
+
   function getParam(url, key){
     try{
       const u = new URL(url);
@@ -574,7 +584,8 @@
     document.querySelectorAll(".tab[data-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.view === view);
     });
-    window.scrollTo({top:0, behavior:"instant"});
+    if(view === "explore") renderExplore();
+    window.scrollTo({top:0, behavior:"auto"});
   }
 
   // Cards
@@ -641,13 +652,13 @@
     });
   }
   // Explore view (Category Maps grouped by collection)
-  function renderExplore(qArg){
+  function renderExplore(){
   const root = document.getElementById("exploreCollections");
   const countEl = document.getElementById("exploreCount");
   if(!root) return;
 
   // Pull query from Explore search input (if it exists)
-  const q = (qArg != null ? String(qArg) : (document.getElementById("exploreSearch")?.value || "")).trim().toLowerCase();
+  const q = (document.getElementById("exploreSearch")?.value || "").trim().toLowerCase();
 
   // Use the full category library
   const base = (LIBRARIES.tags || []).filter(x => x && x.title && x.url);
@@ -721,7 +732,7 @@
 
   const exploreSearch = document.getElementById("exploreSearch");
   if(exploreSearch){
-    exploreSearch.addEventListener("input", (e) => renderExplore(e.target.value));
+    exploreSearch.addEventListener("input", () => renderExplore());
   }
 
   // Explore buttons
