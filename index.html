@@ -260,20 +260,25 @@
           <div class="subbarInner">
             <div class="subbarTitle">Explore — Live NYC Map</div>
             <div class="subbarRight">
-              <select id="tagPicker" class="select">
-                <option value="">Search & open a category map…</option>
-              </select>
+              <input id="exploreSearch" class="search" type="search" placeholder="Search category maps…" autocomplete="off" style="max-width:320px;" />
               <button class="miniBtn" id="openShare">Open full screen</button>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="embedWrap" style="margin-top:14px;">
-        <iframe id="shareFrame" src="https://share.livexyz.com/" title="Live NYC Map"></iframe>
-        <div id="embedFallback" class="embedFallback" style="display:none;">
-          The map preview may be blocked in some browsers. Use “Open full screen” to view the map in a new tab.
+      <div class="wrap">
+        <div class="section" style="margin-top:14px;">
+          <div class="sectionHeader">
+            <div>
+              <h2>Citywide</h2>
+              <p>The full Live NYC Map.</p>
+            </div>
+          </div>
+          <div id="exploreCitywide" class="grid"></div>
         </div>
+
+        <div id="exploreCollections"></div>
       </div>
     </section>
 
@@ -407,6 +412,110 @@
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  // --- Manifest (cover images) ---
+  // assets/manifest.csv is generated from manifest.xlsx and points to optimized JPGs in assets/all/
+  function slugify(str){
+    return String(str || "")
+      .trim().toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/['"]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function getParam(url, key){
+    try{
+      const u = new URL(url);
+      return u.searchParams.get(key);
+    }catch(e){ return null; }
+  }
+
+  function parseCSV(text){
+    const rows = [];
+    let row = [], cur = "", inQ = false;
+    for(let i=0;i<text.length;i++){
+      const ch = text[i];
+      if(inQ){
+        if(ch === '"'){
+          if(text[i+1] === '"'){ cur += '"'; i++; }
+          else{ inQ = false; }
+        }else cur += ch;
+      }else{
+        if(ch === '"') inQ = true;
+        else if(ch === ","){ row.push(cur); cur=""; }
+        else if(ch === "\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+        else if(ch !== "\r"){ cur += ch; }
+      }
+    }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    const header = (rows.shift() || []).map(h => h.trim());
+    return rows
+      .filter(r => r.some(x => String(x||"").trim().length))
+      .map(r => {
+        const obj = {};
+        header.forEach((h, idx) => obj[h] = r[idx] ?? "");
+        return obj;
+      });
+  }
+
+  async function loadManifest(){
+    try{
+      const res = await fetch("assets/manifest.csv", { cache: "no-store" });
+      if(!res.ok) throw new Error("manifest fetch failed");
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      const byId = new Map();
+      const bySlug = new Map();
+      rows.forEach(r => {
+        const mapId = (r.mapId || r.mapID || r.listId || "").trim();
+        const slug  = (r.slug || "").trim();
+        const file  = (r.file_all || r.file || "").trim();
+        if(mapId && file) byId.set(mapId, file);
+        if(slug && file) bySlug.set(slug, file);
+      });
+
+      // Decorate neighborhoods/corridors by listId
+      LIBRARIES.neighborhoods = LIBRARIES.neighborhoods.map(x => {
+        const listId = getParam(x.url, "listId");
+        const thumb = (listId && byId.get(listId)) ? byId.get(listId) : "";
+        return { ...x, thumb: thumb || x.thumb || "" };
+      });
+
+      // Decorate tag/category maps by slug(title)
+      LIBRARIES.tags = LIBRARIES.tags.map(x => {
+        const s = slugify(x.title);
+        const thumb = bySlug.get(s) || "";
+        return { ...x, slug: s, thumb: thumb || x.thumb || "" };
+      });
+
+      // Country tiles keep their flag images as-is, but we still add slug for search
+      LIBRARIES.countries = LIBRARIES.countries.map(x => ({ ...x, slug: slugify(x.title) }));
+
+      // Citywide cover (from your assets/all folder)
+      window.CITYWIDE = {
+        title: "NYC Citywide",
+        type: "Citywide",
+        group: "Explore",
+        url: "https://share.livexyz.com/?theme=dark",
+        thumb: "assets/all/noid_79b95e89fb__nyc-citywide.jpg"
+      };
+
+      return true;
+    }catch(e){
+      console.warn("Manifest load failed:", e);
+      // keep site usable even if manifest is missing
+      window.CITYWIDE = {
+        title: "NYC Citywide",
+        type: "Citywide",
+        group: "Explore",
+        url: "https://share.livexyz.com/?theme=dark",
+        thumb: ""
+      };
+      return false;
+    }
+  }
+
   // Thumbnails (optional). We use these sparingly for a polished “preview” feel.
   function thumbFromUrl(url){
     const enc = encodeURIComponent(url);
@@ -477,26 +586,63 @@
       });
     });
   }
+  // Explore view (Category Maps grouped by collection)
+  function renderExplore(){
+    // Citywide card
+    const cityWrap = document.getElementById("exploreCitywide");
+    if(cityWrap){
+      const cityItem = window.CITYWIDE || { title:"NYC Citywide", type:"Citywide", url:"https://share.livexyz.com/?theme=dark", thumb:"" };
+      cityWrap.innerHTML = cardHTML({ ...cityItem, meta:"Open the full map", thumb: cityItem.thumb || thumbFromUrl(cityItem.url) });
+      bindCardClicks(cityWrap, [cityItem]);
+    }
 
-  // Build explore tag picker
-  const tagPicker = document.getElementById("tagPicker");
-  const allTags = LIBRARIES.tags
-    .map(t => ({label: `${t.title} — ${t.group}`, url: t.url }))
-    .sort((a,b) => a.label.localeCompare(b.label));
+    // Group tags by their `group` (Food, Essentials, Services, etc.)
+    const root = document.getElementById("exploreCollections");
+    if(!root) return;
 
-  allTags.slice(0, 2000).forEach(t => {
-    const opt = document.createElement("option");
-    opt.value = t.url;
-    opt.textContent = t.label;
-    tagPicker.appendChild(opt);
-  });
+    const q = (document.getElementById("exploreSearch")?.value || "").trim().toLowerCase();
 
-  tagPicker.addEventListener("change", () => {
-    if(tagPicker.value) openNewTab(tagPicker.value);
-    tagPicker.value = "";
-  });
+    const groups = {};
+    LIBRARIES.tags.forEach(t => {
+      const hay = `${t.title} ${t.group}`.toLowerCase();
+      if(q && !hay.includes(q)) return;
+      (groups[t.group] ||= []).push(t);
+    });
+
+    const orderedGroupNames = Object.keys(groups).sort((a,b) => a.localeCompare(b));
+
+    root.innerHTML = orderedGroupNames.map(g => {
+      const items = groups[g].sort((a,b) => a.title.localeCompare(b.title));
+      const cards = items.map(x => cardHTML({ ...x, meta: x.type, thumb: x.thumb || thumbFromUrl(x.url) })).join("");
+      return `
+        <div class="section">
+          <div class="sectionHeader">
+            <div>
+              <h2>${escapeHTML(g)}</h2>
+              <p>${items.length} maps</p>
+            </div>
+          </div>
+          <div class="grid">${cards}</div>
+        </div>
+      `;
+    }).join("");
+
+    // Bind clicks for each group grid
+    // (Re-select each section grid and bind using the same ordered arrays)
+    const grids = root.querySelectorAll(".grid");
+    orderedGroupNames.forEach((g, idx) => {
+      const items = groups[g].sort((a,b) => a.title.localeCompare(b.title));
+      bindCardClicks(grids[idx], items);
+    });
+  }
+
+  const exploreSearch = document.getElementById("exploreSearch");
+  if(exploreSearch){
+    exploreSearch.addEventListener("input", () => renderExplore());
+  }
 
   // Explore buttons
+
   document.getElementById("openShare").addEventListener("click", () => openNewTab("https://share.livexyz.com/"));
   document.getElementById("openGeneral").addEventListener("click", () => openNewTab("https://share.livexyz.com/"));
 
@@ -509,13 +655,13 @@
     bindTileClicks(homeCountry, c);
 
     // neighborhoods: show 6 curated (first 6)
-    const n = LIBRARIES.neighborhoods.slice(0, 6).map(x => ({...x, meta: x.type, thumb: thumbFromUrl(x.url)}));
+    const n = LIBRARIES.neighborhoods.slice(0, 6).map(x => ({...x, meta: x.type, thumb: x.thumb || thumbFromUrl(x.url)}));
     const homeNeigh = document.getElementById("homeNeighborhoods");
     homeNeigh.innerHTML = n.map(cardHTML).join("");
     bindCardClicks(homeNeigh, n);
 
     // tags: show 6 top
-    const t = LIBRARIES.tags.slice(0, 6).map(x => ({...x, meta: x.group, thumb: thumbFromUrl(x.url)}));
+    const t = LIBRARIES.tags.slice(0, 6).map(x => ({...x, meta: x.group, thumb: x.thumb || thumbFromUrl(x.url)}));
     const homeTags = document.getElementById("homeTags");
     homeTags.innerHTML = t.map(cardHTML).join("");
     bindCardClicks(homeTags, t);
@@ -641,32 +787,35 @@
     });
   });
 
-  // Explore iframe fallback (some environments block iframing)
+  // Explore iframe fallback (older versions used an iframe; keep this guard in case an element exists)
   const shareFrame = document.getElementById("shareFrame");
-  shareFrame.addEventListener("load", () => {
-    // If it loads, great.
-  });
-  // If iframe is blocked, it may load about:blank or be refused; we can only provide UX fallback.
-  setTimeout(() => {
-    try {
-      // Accessing contentWindow may throw if blocked by X-Frame-Options; ignore.
-      const href = shareFrame.contentWindow?.location?.href;
-      // If it didn't navigate away from about:blank after a while, show fallback
-      if (!href || href === "about:blank") {
-        document.getElementById("embedFallback").style.display = "";
+  if(shareFrame){
+    shareFrame.addEventListener("load", () => {});
+    setTimeout(() => {
+      try {
+        const href = shareFrame.contentWindow?.location?.href;
+        if (!href || href === "about:blank") {
+          const fb = document.getElementById("embedFallback");
+          if(fb) fb.style.display = "";
+        }
+      } catch(e) {
+        const fb = document.getElementById("embedFallback");
+        if(fb) fb.style.display = "";
       }
-    } catch(e) {
-      document.getElementById("embedFallback").style.display = "";
-    }
-  }, 1200);
+    }, 1200);
+  }
 
   // Init
-  setView("home");
-  renderHome();
-  renderSearch("");
-  renderCountry("");
-  renderNeighborhoods("");
-  renderEvents();
+  (async () => {
+    await loadManifest(); // adds cover photos for Neighborhood + Category cards
+    setView("home");
+    renderHome();
+    renderExplore();
+    renderSearch("");
+    renderCountry("");
+    renderNeighborhoods("");
+    renderEvents();
+  })();
 </script>
 </body>
 </html>
