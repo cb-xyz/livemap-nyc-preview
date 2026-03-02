@@ -166,10 +166,6 @@
 .subbarControls{display:flex;justify-content:flex-end}
 #exploreSearch.search{max-width:none;width:min(720px, 92vw)}
 
-
-/* Explore: match Country/Neighborhood hero + wider search */
-.exploreSearchWrap{max-width:none;width:min(720px, 92vw);}
-
 </style>
 </head>
 <body>
@@ -269,19 +265,19 @@
 
     <!-- EXPLORE -->
     <section id="view-explore" class="view" style="display:none;">
-      <div class="hero" style="padding-bottom:6px;">
-        <div class="heroCard">
-          <h1>Explore</h1>
-          <p class="subtitle">Browse every place on every block. Search and tap across hundreds of categories.</p>
-          <div class="heroRow" style="margin-top:10px;">
-            <div class="searchWrap exploreSearchWrap">
+      <div class="subbar">
+        <div class="wrap">
+          <div class="subbarInner subbarStack">
+            <div class="subbarTitle">Explore — Live NYC Map</div>
+            <div class="subbarControls">
               <input id="exploreSearch" class="search" type="search" placeholder="Search category maps…" autocomplete="off" />
             </div>
           </div>
         </div>
       </div>
-
-<div class="sectionHeader">
+<div class="wrap">
+        <div class="section" style="margin-top:14px;">
+          <div class="sectionHeader">
             <div>
               <h2>Citywide</h2>
               <p>The full Live NYC Map.</p>
@@ -526,7 +522,7 @@
           const coll = String(r.collection||"").toLowerCase();
           const type = coll ? (coll === "corridor" ? "Corridor" : "Neighborhood") : "Neighborhood";
           const file = (r.file_all || "").trim().replace(/^assets\//,'');
-          const thumb = normalizeThumb(item.thumb) || thumbFromUrl(item.url, item.title);
+          const thumb = file ? ("assets/" + file.replace(/^\/+/,'').replace(/^all\//,'all/')) : "";
           return { title, url, type, group: type, thumb };
         });
       }
@@ -565,7 +561,7 @@
             type: "Category",
             group: titleCase(collection),   // this becomes your Explore sections (Food, Drinks, Essentials, etc.)
             url,
-            thumb: (file ? ("assets/" + String(file).replace(/^assets\//,"").replace(/^\/+/, "").replace(/^all\//,"all/")) : ""),
+            thumb: file,
             slug: slugify(title)
           };
         })
@@ -602,17 +598,7 @@
   }
 
   // Thumbnails (optional). We use these sparingly for a polished “preview” feel.
-  
-function normalizeThumb(t){
-  if(!t) return "";
-  let s = String(t).trim();
-  if(!s) return "";
-  // if manifest gives all/<file>, prefix assets/
-  if(s.startsWith("all/")) return "assets/" + s;
-  return s;
-}
-
-function thumbFromUrl(url, title){
+  function thumbFromUrl(url, title){
   // Prefer local screenshots in assets/all based on maplist id + slugified title
   const id = extractMapId(url);
   const slug = slugify(title || "");
